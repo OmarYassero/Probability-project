@@ -382,7 +382,7 @@ def create_box_plot(data: np.ndarray) -> go.Figure:
             line=dict(width=2, color='#00FFFF')
         ),
         line=dict(color='#00FFFF', width=2),
-        fillcolor='rgba(0, 255, 255, 0.2'),
+        fillcolor='rgba(0, 255, 255, 0.2)', # Corrected the quote here
         hovertemplate='<b>Box Plot</b><br>Q1: %{q1:.2f}<br>Median: %{median:.2f}<br>Q3: %{q3:.2f}<extra></extra>'
     ))
     
