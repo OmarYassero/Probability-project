@@ -1,213 +1,257 @@
 # app.py
 import streamlit as st
-import numpy as np
 import pandas as pd
+import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
+import io
 import base64
 
-# Page Configuration - MUST BE FIRST
+# Page configuration - MUST be first Streamlit command
 st.set_page_config(
-    page_title="CYBER-QUANTUM STAT OS v2.0",
-    page_icon="🔮",
+    page_title="AEGIS STAT ANALYZER | Air-Defense Control",
+    page_icon="🛡️",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 # ============================================================================
-# CUSTOM CSS - CYBERPUNK/SCI-FI THEME
+# CUSTOM CSS - AIR DEFENSE SYSTEM AESTHETIC
 # ============================================================================
 def inject_custom_css():
-    """Inject high-tech cyberpunk CSS with glassmorphism, neon glow, and scanlines"""
+    """Inject futuristic air-defense control system CSS"""
     
-    # Base64 encoded subtle noise texture (tiny transparent noise)
-    noise_svg = "data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E"
-    
-    css = f"""
+    css = """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+    /* Import futuristic fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
     
-    /* TOTAL BLACKOUT */
-    .stApp, .main, .stApp > header, .stApp > footer, .st-emotion-cache-1v0mbdj, .st-emotion-cache-1v0mbdj > div {{
-        background: #000000 !important;
-        background-color: #000000 !important;
-    }}
+    /* Global dark background */
+    .stApp {
+        background: linear-gradient(135deg, #0a0a0a 0%, #050505 100%);
+        font-family: 'Share Tech Mono', monospace;
+    }
     
-    /* Remove all default padding/margins */
-    .main .block-container {{
-        padding-top: 1rem;
-        padding-bottom: 0rem;
-        padding-left: 1.5rem;
-        padding-right: 1.5rem;
-        max-width: 100%;
-    }}
+    /* Hide default Streamlit elements */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
     
-    /* Global font cyber */
-    html, body, .stApp, div, p, span, label, .stMarkdown {{
-        font-family: 'Share Tech Mono', 'Courier New', monospace !important;
-        color: #00FFFF !important;
-    }}
+    /* Main container */
+    .main .block-container {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        max-width: 1400px;
+    }
     
-    /* Headers with Orbitron */
-    h1, h2, h3, h4, h5, h6, .st-emotion-cache-1y4p8pa {{
-        font-family: 'Orbitron', monospace !important;
-        font-weight: 900 !important;
-        letter-spacing: 2px !important;
-        text-transform: uppercase !important;
-        color: #BD00FF !important;
-        text-shadow: 0 0 10px #BD00FF, 0 0 20px rgba(189,0,255,0.3) !important;
-    }}
+    /* Glassmorphism panels */
+    .glass-panel {
+        background: rgba(10, 10, 10, 0.85);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 255, 159, 0.2);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 0 20px rgba(0, 255, 159, 0.1);
+        transition: all 0.3s ease;
+    }
     
-    /* Glassmorphism containers */
-    .cyber-card, [data-testid="stVerticalBlock"] > div, .stPlotlyChart, .stDataFrame, .stTable, [data-testid="stForm"] {{
-        background: rgba(0, 10, 20, 0.3) !important;
-        backdrop-filter: blur(10px) !important;
-        -webkit-backdrop-filter: blur(10px) !important;
-        border: 1px solid rgba(0, 255, 255, 0.2) !important;
-        border-radius: 8px !important;
-        box-shadow: 0 0 15px rgba(0, 255, 255, 0.1), inset 0 0 20px rgba(0, 255, 255, 0.02) !important;
-        margin-bottom: 1rem !important;
-        padding: 0.5rem !important;
-    }}
+    .glass-panel:hover {
+        border-color: rgba(0, 255, 159, 0.5);
+        box-shadow: 0 0 30px rgba(0, 255, 159, 0.2);
+    }
     
-    /* Sidebar glass */
-    [data-testid="stSidebar"] {{
-        background: rgba(0, 0, 0, 0.95) !important;
-        border-right: 2px solid #00FFFF !important;
-        box-shadow: -10px 0 30px rgba(0, 255, 255, 0.2) !important;
-    }}
+    /* Section headers */
+    .system-header {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.5rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        color: #00ff9f;
+        text-shadow: 0 0 10px rgba(0, 255, 159, 0.5);
+        border-left: 4px solid #00ff9f;
+        padding-left: 1rem;
+        margin-bottom: 1.5rem;
+    }
     
-    [data-testid="stSidebar"] .stMarkdown, [data-testid="stSidebar"] label {{
-        color: #00FFFF !important;
-    }}
+    .system-header-cyan {
+        border-left-color: #00eaff;
+        color: #00eaff;
+        text-shadow: 0 0 10px rgba(0, 234, 255, 0.5);
+    }
     
-    /* Cyber button */
-    .stButton > button {{
-        background: linear-gradient(135deg, #003333, #000000) !important;
-        border: 2px solid #00FFFF !important;
-        color: #00FFFF !important;
-        font-family: 'Orbitron', monospace !important;
-        font-weight: bold !important;
-        text-transform: uppercase !important;
-        letter-spacing: 2px !important;
-        border-radius: 0px !important;
-        box-shadow: 0 0 15px rgba(0, 255, 255, 0.3) !important;
-        transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
-    }}
+    /* Input area */
+    .input-container {
+        background: rgba(0, 0, 0, 0.6);
+        border: 2px solid rgba(0, 255, 159, 0.3);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
     
-    .stButton > button:hover {{
-        background: linear-gradient(135deg, #006666, #001111) !important;
-        box-shadow: 0 0 30px rgba(0, 255, 255, 0.6) !important;
-        border-color: #BD00FF !important;
-        transform: scale(1.02) !important;
-    }}
+    /* Custom button */
+    .stButton > button {
+        background: linear-gradient(135deg, #00ff9f 0%, #00b8ff 100%);
+        color: #0a0a0a;
+        font-family: 'Orbitron', monospace;
+        font-weight: 700;
+        font-size: 1rem;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        border: none;
+        border-radius: 4px;
+        padding: 0.75rem 2rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 0 15px rgba(0, 255, 159, 0.3);
+    }
     
-    /* Text area cyber */
-    .stTextArea textarea {{
-        background: #0a0a0a !important;
-        border: 1px solid #00FFFF !important;
-        color: #00FFFF !important;
-        font-family: 'Share Tech Mono', monospace !important;
-        box-shadow: inset 0 0 10px rgba(0, 255, 255, 0.1) !important;
-    }}
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 25px rgba(0, 255, 159, 0.6);
+        background: linear-gradient(135deg, #00eaff 0%, #00ff9f 100%);
+    }
+    
+    /* Text input */
+    .stTextArea textarea {
+        background: rgba(0, 0, 0, 0.8);
+        border: 1px solid #00ff9f;
+        color: #00ff9f;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.9rem;
+        border-radius: 4px;
+    }
+    
+    .stTextArea textarea:focus {
+        border-color: #00eaff;
+        box-shadow: 0 0 10px rgba(0, 234, 255, 0.3);
+    }
+    
+    /* Metrics styling */
+    [data-testid="stMetricValue"] {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.8rem;
+        color: #00ff9f;
+        text-shadow: 0 0 8px rgba(0, 255, 159, 0.3);
+    }
+    
+    [data-testid="stMetricLabel"] {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: #00eaff;
+    }
+    
+    /* DataFrame styling */
+    .dataframe {
+        background: rgba(0, 0, 0, 0.6);
+        border: 1px solid #00ff9f;
+        border-radius: 4px;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 0.85rem;
+    }
+    
+    .dataframe th {
+        background: rgba(0, 255, 159, 0.15);
+        color: #00ff9f;
+        font-family: 'Orbitron', monospace;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 0.75rem;
+    }
+    
+    .dataframe td {
+        color: #00eaff;
+        padding: 0.5rem;
+    }
+    
+    /* Status indicators */
+    .status-online {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        background: #00ff9f;
+        border-radius: 50%;
+        box-shadow: 0 0 8px #00ff9f;
+        animation: pulse 2s infinite;
+        margin-right: 8px;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    
+    /* Download button */
+    .download-btn {
+        background: rgba(0, 255, 159, 0.1);
+        border: 1px solid #00ff9f;
+        border-radius: 4px;
+        padding: 0.5rem 1rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .download-btn:hover {
+        background: rgba(0, 255, 159, 0.2);
+        border-color: #00eaff;
+    }
+    
+    /* Divider */
+    hr {
+        border-color: rgba(0, 255, 159, 0.2);
+        margin: 1.5rem 0;
+    }
     
     /* Scrollbar */
-    ::-webkit-scrollbar {{
-        width: 6px;
-        height: 6px;
-        background: #000000;
-    }}
-    ::-webkit-scrollbar-track {{
-        background: #000000;
-    }}
-    ::-webkit-scrollbar-thumb {{
-        background: #00FFFF;
-        box-shadow: 0 0 10px #00FFFF;
-    }}
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
     
-    /* Scanline overlay */
-    .scanline {{
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        z-index: 99999;
-        background: repeating-linear-gradient(
-            0deg,
-            rgba(0, 255, 255, 0.02) 0px,
-            rgba(0, 255, 255, 0.02) 2px,
-            transparent 2px,
-            transparent 6px
-        );
-        opacity: 0.5;
-    }}
+    ::-webkit-scrollbar-track {
+        background: #0a0a0a;
+    }
     
-    /* Noise overlay */
-    .noise {{
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        z-index: 99998;
-        background-image: url('{noise_svg}');
-        opacity: 0.12;
-    }}
+    ::-webkit-scrollbar-thumb {
+        background: #00ff9f;
+        border-radius: 4px;
+    }
     
-    /* Number input */
-    .stNumberInput input {{
-        background: #0a0a0a !important;
-        border: 1px solid #BD00FF !important;
-        color: #BD00FF !important;
-    }}
+    ::-webkit-scrollbar-thumb:hover {
+        background: #00eaff;
+    }
     
-    /* Metrics */
-    [data-testid="stMetricValue"] {{
-        font-family: 'Orbitron', monospace !important;
-        color: #00FFFF !important;
-        text-shadow: 0 0 8px #00FFFF !important;
-    }}
-    
-    /* Dataframe styling */
-    .dataframe, .stDataFrame {{
-        background: rgba(0, 0, 0, 0.6) !important;
-        border-color: #00FFFF !important;
-    }}
-    
-    .dataframe th {{
-        background: rgba(0, 255, 255, 0.1) !important;
-        color: #BD00FF !important;
-        border-color: #00FFFF !important;
-    }}
+    /* Expander */
+    .streamlit-expanderHeader {
+        font-family: 'Orbitron', monospace;
+        background: rgba(0, 255, 159, 0.05);
+        color: #00ff9f;
+    }
     </style>
     
-    <div class="scanline"></div>
-    <div class="noise"></div>
+    <div style="position: fixed; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #00ff9f, #00eaff, #00ff9f); z-index: 9999;"></div>
     """
     
     st.markdown(css, unsafe_allow_html=True)
 
-# Inject the CSS
+# Call CSS injection
 inject_custom_css()
 
 # ============================================================================
 # STATISTICAL FUNCTIONS
 # ============================================================================
-def parse_data_input(data_str):
-    """Parse comma/semi-colon/space separated numeric data"""
-    if not data_str.strip():
+def parse_data(input_string):
+    """Parse comma-separated input into numpy array"""
+    if not input_string or input_string.strip() == "":
         return None
     
-    # Replace common separators with comma
-    for sep in [';', ' ', '\n', '\t']:
-        data_str = data_str.replace(sep, ',')
-    
+    # Split by comma and clean
     numbers = []
-    for item in data_str.split(','):
+    for item in input_string.split(','):
         item = item.strip()
         if item:
             try:
@@ -218,182 +262,79 @@ def parse_data_input(data_str):
     return np.array(numbers) if numbers else None
 
 def sturges_rule(n):
-    """Calculate optimal number of bins using Sturges' Rule"""
+    """Calculate number of classes using Sturges' Rule"""
     return int(np.ceil(np.log2(n) + 1))
 
-def create_frequency_distribution(data, num_bins=None):
-    """Generate frequency distribution table with intervals"""
-    if data is None or len(data) == 0:
-        return None, None, None
+def calculate_class_statistics(data):
+    """Calculate all statistical measures required"""
+    n = len(data)
+    min_val = np.min(data)
+    max_val = np.max(data)
+    range_val = max_val - min_val
     
-    if num_bins is None:
-        num_bins = sturges_rule(len(data))
+    # Number of classes using Sturges' Rule
+    num_classes = sturges_rule(n)
     
-    # Calculate histogram
-    counts, bin_edges = np.histogram(data, bins=num_bins)
+    # Class width
+    class_width = range_val / num_classes
     
-    # Create intervals
+    # Create class intervals
     intervals = []
+    frequencies = []
+    cum_frequencies = []
     midpoints = []
-    for i in range(len(bin_edges) - 1):
-        lower = bin_edges[i]
-        upper = bin_edges[i + 1]
-        intervals.append(f"[{lower:.2f}, {upper:.2f})")
-        midpoints.append((lower + upper) / 2)
+    
+    lower_bound = min_val
+    
+    for i in range(num_classes):
+        upper_bound = lower_bound + class_width if i < num_classes - 1 else max_val + 0.0001
+        
+        # Count frequency in this interval
+        if i == num_classes - 1:
+            freq = np.sum((data >= lower_bound) & (data <= upper_bound))
+        else:
+            freq = np.sum((data >= lower_bound) & (data < upper_bound))
+        
+        frequencies.append(freq)
+        midpoints.append((lower_bound + upper_bound) / 2)
+        
+        # Format interval string
+        interval_str = f"[{lower_bound:.2f}, {upper_bound:.2f}{']' if i == num_classes - 1 else ')'}"
+        intervals.append(interval_str)
+        
+        lower_bound = upper_bound
     
     # Calculate cumulative frequencies
-    cumulative = np.cumsum(counts)
+    cum_frequencies = np.cumsum(frequencies)
     
     # Create DataFrame
     df = pd.DataFrame({
-        'INTERVAL': intervals,
-        'MIDPOINT': midpoints,
-        'FREQUENCY': counts,
-        'CUMULATIVE': cumulative
+        "Class Interval": intervals,
+        "Frequency": frequencies,
+        "Cumulative Frequency": cum_frequencies,
+        "Midpoint": [round(m, 2) for m in midpoints]
     })
     
-    return df, bin_edges, counts
+    return df, {
+        "n": n,
+        "min": min_val,
+        "max": max_val,
+        "range": range_val,
+        "num_classes": num_classes,
+        "class_width": class_width,
+        "mean": np.mean(data),
+        "median": np.median(data),
+        "std": np.std(data),
+        "variance": np.var(data)
+    }, frequencies, midpoints, intervals
 
 # ============================================================================
-# PLOTLY VISUALIZATIONS WITH GLOW & EASING
+# PLOTLY VISUALIZATIONS
 # ============================================================================
-def create_glow_layout(title, x_title="Value", y_title="Frequency"):
-    """Create a neon-cyber layout for Plotly figures"""
-    return go.Layout(
-        title={
-            'text': title,
-            'font': {'family': 'Orbitron', 'size': 20, 'color': '#BD00FF'},
-            'x': 0.05,
-            'xanchor': 'left'
-        },
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0.3)',
-        font={'family': 'Share Tech Mono', 'size': 12, 'color': '#00FFFF'},
-        xaxis={
-            'gridcolor': 'rgba(0, 255, 255, 0.1)',
-            'linecolor': '#00FFFF',
-            'linewidth': 1,
-            'mirror': True,
-            'title_font': {'color': '#00FFFF'},
-            'tickfont': {'color': '#00FFFF'},
-            'gridwidth': 0.5
-        },
-        yaxis={
-            'gridcolor': 'rgba(189, 0, 255, 0.1)',
-            'linecolor': '#BD00FF',
-            'linewidth': 1,
-            'mirror': True,
-            'title_font': {'color': '#BD00FF'},
-            'tickfont': {'color': '#BD00FF'},
-            'gridwidth': 0.5
-        },
-        hoverlabel={
-            'bgcolor': 'rgba(0,0,0,0.8)',
-            'font_size': 12,
-            'font_family': 'Share Tech Mono',
-            'bordercolor': '#00FFFF'
-        },
-        margin=dict(l=50, r=30, t=60, b=50),
-        transition={'duration': 800, 'easing': 'cubic-in-out'}
-    )
-
-def create_histogram_polygon(data, bin_edges, counts):
-    """Create combined histogram and frequency polygon with glitch hover"""
-    fig = go.Figure()
-    
-    # Histogram bars with cyan glow
-    fig.add_trace(go.Bar(
-        x=bin_edges[:-1],
-        y=counts,
-        width=np.diff(bin_edges),
-        name='HISTOGRAM',
-        marker=dict(
-            color='rgba(0, 255, 255, 0.3)',
-            line=dict(color='#00FFFF', width=1.5),
-            pattern_shape=".",
-        ),
-        hovertemplate='<b>Interval</b>: %{x:.2f}<br><b>Freq</b>: %{y}<extra></extra>'
-    ))
-    
-    # Frequency polygon line with purple glow
-    bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
-    fig.add_trace(go.Scatter(
-        x=bin_centers,
-        y=counts,
-        mode='lines+markers',
-        name='POLYGON',
-        line=dict(color='#BD00FF', width=3, shape='linear'),
-        marker=dict(
-            size=8,
-            color='#BD00FF',
-            symbol='diamond',
-            line=dict(color='#00FFFF', width=1)
-        ),
-        hovertemplate='<b>Midpoint</b>: %{x:.2f}<br><b>Freq</b>: %{y}<extra></extra>'
-    ))
-    
-    layout = create_glow_layout("📊 HISTOGRAM + FREQUENCY POLYGON", "DATA BINS", "FREQUENCY")
-    layout.update(
-        barmode='overlay',
-        bargap=0.05,
-        xaxis=dict(tickmode='linear'),
-        hovermode='closest'
-    )
-    
-    fig.update_layout(layout)
-    
-    # Add transition animation
-    fig.update_layout(
-        updatemenus=[dict(
-            type="buttons",
-            showactive=False,
-            buttons=[dict(
-                label="▶ STREAM",
-                method="animate",
-                args=[None, {"frame": {"duration": 800, "easing": "cubic-in-out"}, "fromcurrent": True}]
-            )]
-        )]
-    )
-    
-    return fig
-
-def create_ogive(data, bin_edges, counts):
-    """Create cumulative frequency ogive with neon glow"""
-    cumulative = np.cumsum(counts)
-    bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
-    
-    fig = go.Figure()
-    
-    fig.add_trace(go.Scatter(
-        x=bin_centers,
-        y=cumulative,
-        mode='lines+markers',
-        name='CUMULATIVE',
-        line=dict(color='#00FFFF', width=3, dash='solid'),
-        marker=dict(
-            size=8,
-            color='#BD00FF',
-            symbol='circle',
-            line=dict(color='#00FFFF', width=2)
-        ),
-        fill='tozeroy',
-        fillcolor='rgba(0, 255, 255, 0.05)',
-        hovertemplate='<b>Value</b>: %{x:.2f}<br><b>Cumulative Freq</b>: %{y}<extra></extra>'
-    ))
-    
-    layout = create_glow_layout("📈 OGIVE (CUMULATIVE FREQUENCY)", "CLASS MIDPOINTS", "CUMULATIVE FREQUENCY")
-    layout.update(
-        yaxis=dict(type='linear'),
-        xaxis=dict(type='linear')
-    )
-    
-    fig.update_layout(layout)
-    return fig
-
 def create_dot_plot(data):
-    """Create digital node-style dot plot"""
-    # Create jittered positions for dots
-    y_jitter = np.random.normal(0, 0.05, len(data))
+    """Generate dot plot visualization"""
+    # Create jitter for y-axis
+    y_jitter = np.random.normal(0, 0.08, len(data))
     
     fig = go.Figure()
     
@@ -401,225 +342,354 @@ def create_dot_plot(data):
         x=data,
         y=y_jitter,
         mode='markers',
-        name='DATA NODES',
         marker=dict(
-            size=8,
-            color='#00FFFF',
-            symbol='diamond',
-            line=dict(color='#BD00FF', width=1.5),
+            size=12,
+            color='#00ff9f',
+            symbol='circle',
+            line=dict(color='#00eaff', width=2),
             opacity=0.8
         ),
-        hovertemplate='<b>Value</b>: %{x:.2f}<extra></extra>'
+        hovertemplate='<b>Value:</b> %{x:.2f}<extra></extra>'
     ))
     
-    layout = create_glow_layout("⬜ DOT PLOT - DIGITAL NODES", "DATA VALUES", "JITTER")
-    layout.update(
-        yaxis=dict(showticklabels=False, title_text="", showgrid=False),
-        xaxis=dict(showgrid=True),
-        showlegend=False
+    fig.update_layout(
+        title={
+            'text': "DOT PLOT - DATA DISTRIBUTION",
+            'font': {'family': 'Orbitron', 'size': 18, 'color': '#00ff9f'},
+            'x': 0.05
+        },
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0.3)',
+        font={'family': 'Share Tech Mono', 'color': '#00eaff'},
+        xaxis=dict(
+            title="DATA VALUES",
+            gridcolor='rgba(0, 255, 159, 0.1)',
+            linecolor='#00ff9f',
+            linewidth=2,
+            showgrid=True
+        ),
+        yaxis=dict(
+            title="",
+            showticklabels=False,
+            showgrid=False,
+            zeroline=False
+        ),
+        hovermode='closest',
+        height=400,
+        margin=dict(l=50, r=30, t=60, b=50)
     )
     
-    fig.update_layout(layout)
     return fig
 
-def create_box_plot(data):
-    """Create minimalist vertical box plot with neon aesthetics"""
+def create_histogram(data, bins):
+    """Generate histogram visualization"""
     fig = go.Figure()
     
-    fig.add_trace(go.Box(
-        y=data,
-        name='DISTRIBUTION',
-        boxmean='sd',
+    fig.add_trace(go.Histogram(
+        x=data,
+        nbinsx=bins,
         marker=dict(
-            color='#00FFFF',
-            line=dict(color='#BD00FF', width=2),
-            outliercolor='#BD00FF',
-            symbol='x'
+            color='rgba(0, 255, 159, 0.6)',
+            line=dict(color='#00eaff', width=2)
         ),
-        line=dict(color='#00FFFF', width=2),
-        fillcolor='rgba(0, 255, 255, 0.1)',
-        whiskerwidth=0.8,
-        boxpoints='outliers',
-        jitter=0.3,
-        pointpos=0,
-        hovertemplate='<b>Value</b>: %{y:.2f}<extra></extra>'
+        opacity=0.8,
+        hovertemplate='<b>Range:</b> %{x}<br><b>Frequency:</b> %{y}<extra></extra>'
     ))
     
-    layout = create_glow_layout("📦 BOX PLOT - QUANTUM DISTRIBUTION", "", "VALUES")
-    layout.update(
-        xaxis=dict(showticklabels=True, title_text=""),
-        yaxis=dict(title_text="DATA VALUES", title_font_color='#BD00FF'),
-        showlegend=False
+    fig.update_layout(
+        title={
+            'text': "HISTOGRAM - FREQUENCY DISTRIBUTION",
+            'font': {'family': 'Orbitron', 'size': 18, 'color': '#00ff9f'},
+            'x': 0.05
+        },
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0.3)',
+        font={'family': 'Share Tech Mono', 'color': '#00eaff'},
+        xaxis=dict(
+            title="CLASS INTERVALS",
+            gridcolor='rgba(0, 255, 159, 0.1)',
+            linecolor='#00ff9f',
+            linewidth=2
+        ),
+        yaxis=dict(
+            title="FREQUENCY",
+            gridcolor='rgba(0, 234, 255, 0.1)',
+            linecolor='#00eaff',
+            linewidth=2
+        ),
+        bargap=0.05,
+        height=400,
+        margin=dict(l=50, r=30, t=60, b=50)
     )
     
-    fig.update_layout(layout)
     return fig
+
+def create_frequency_polygon(midpoints, frequencies):
+    """Generate frequency polygon visualization"""
+    fig = go.Figure()
+    
+    fig.add_trace(go.Scatter(
+        x=midpoints,
+        y=frequencies,
+        mode='lines+markers',
+        line=dict(color='#00eaff', width=3, shape='linear'),
+        marker=dict(
+            size=10,
+            color='#00ff9f',
+            symbol='diamond',
+            line=dict(color='#00eaff', width=2)
+        ),
+        fill='tozeroy',
+        fillcolor='rgba(0, 234, 255, 0.1),
+        hovertemplate='<b>Midpoint:</b> %{x:.2f}<br><b>Frequency:</b> %{y}<extra></extra>'
+    ))
+    
+    fig.update_layout(
+        title={
+            'text': "FREQUENCY POLYGON",
+            'font': {'family': 'Orbitron', 'size': 18, 'color': '#00ff9f'},
+            'x': 0.05
+        },
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0.3)',
+        font={'family': 'Share Tech Mono', 'color': '#00eaff'},
+        xaxis=dict(
+            title="CLASS MIDPOINTS",
+            gridcolor='rgba(0, 255, 159, 0.1)',
+            linecolor='#00ff9f',
+            linewidth=2
+        ),
+        yaxis=dict(
+            title="FREQUENCY",
+            gridcolor='rgba(0, 234, 255, 0.1)',
+            linecolor='#00eaff',
+            linewidth=2
+        ),
+        height=400,
+        margin=dict(l=50, r=30, t=60, b=50)
+    )
+    
+    return fig
+
+def create_ogive(upper_bounds, cum_frequencies):
+    """Generate ogive (cumulative frequency curve)"""
+    fig = go.Figure()
+    
+    fig.add_trace(go.Scatter(
+        x=upper_bounds,
+        y=cum_frequencies,
+        mode='lines+markers',
+        line=dict(color='#00ff9f', width=3, dash='solid'),
+        marker=dict(
+            size=10,
+            color='#00eaff',
+            symbol='circle',
+            line=dict(color='#00ff9f', width=2)
+        ),
+        fill='tozeroy',
+        fillcolor='rgba(0, 255, 159, 0.1)',
+        hovertemplate='<b>Upper Bound:</b> %{x:.2f}<br><b>Cumulative Freq:</b> %{y}<extra></extra>'
+    ))
+    
+    fig.update_layout(
+        title={
+            'text': "OGIVE - CUMULATIVE FREQUENCY CURVE",
+            'font': {'family': 'Orbitron', 'size': 18, 'color': '#00ff9f'},
+            'x': 0.05
+        },
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0.3)',
+        font={'family': 'Share Tech Mono', 'color': '#00eaff'},
+        xaxis=dict(
+            title="CLASS UPPER BOUNDS",
+            gridcolor='rgba(0, 255, 159, 0.1)',
+            linecolor='#00ff9f',
+            linewidth=2
+        ),
+        yaxis=dict(
+            title="CUMULATIVE FREQUENCY",
+            gridcolor='rgba(0, 234, 255, 0.1)',
+            linecolor='#00eaff',
+            linewidth=2
+        ),
+        height=400,
+        margin=dict(l=50, r=30, t=60, b=50)
+    )
+    
+    return fig
+
+# ============================================================================
+# CSV DOWNLOAD FUNCTION
+# ============================================================================
+def download_csv(df):
+    """Create CSV download button"""
+    csv = df.to_csv(index=False)
+    b64 = base64.b64encode(csv.encode()).decode()
+    href = f'<a href="data:file/csv;base64,{b64}" download="statistical_analysis.csv" style="text-decoration: none;"><div class="download-btn">📥 DOWNLOAD CSV REPORT</div></a>'
+    return href
 
 # ============================================================================
 # MAIN APP
 # ============================================================================
 def main():
-    # Cyber header with ASCII art
+    # Title section
     st.markdown("""
-    <div style="text-align: center; margin-bottom: 1rem;">
-        <span style="font-family: 'Orbitron'; font-size: 28px; color: #00FFFF; text-shadow: 0 0 20px #00FFFF;">
-        ⚡ CYBER-QUANTUM STATISTICAL OS v2.0 ⚡
-        </span><br>
-        <span style="font-family: 'Share Tech Mono'; font-size: 12px; color: #BD00FF;">
-        [ SECURE DATA UPLINK TERMINAL // QUANTUM ANALYTICS ENGINE ]
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <span class="status-online"></span>
+        <span style="font-family: 'Orbitron'; font-size: 2rem; font-weight: 900; background: linear-gradient(135deg, #00ff9f, #00eaff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+        AEGIS STATISTICAL ANALYZER
+        </span>
+        <br>
+        <span style="font-family: 'Share Tech Mono'; font-size: 0.85rem; color: #00eaff;">
+        AIR-DEFENSE CONTROL SYSTEM v2.0 | DATA ANALYSIS MODULE
         </span>
     </div>
-    <hr style="border-color: #00FFFF; box-shadow: 0 0 10px #00FFFF;">
     """, unsafe_allow_html=True)
     
-    # Sidebar - Input Portal
-    with st.sidebar:
-        st.markdown("### 🔐 DATA UPLINK PORTAL")
-        st.markdown("---")
-        
+    # DATA INPUT SECTION
+    st.markdown('<div class="system-header">🔓 DATA INPUT</div>', unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.markdown('<div class="input-container">', unsafe_allow_html=True)
         data_input = st.text_area(
-            "QUANTUM DATA STREAM",
-            placeholder="Enter numbers separated by commas, spaces, or semicolons...\nExample: 12, 15, 18, 22, 25, 28, 30, 32, 35",
-            height=150,
-            key="data_input"
+            "**INPUT DATA STREAM**",
+            placeholder="Enter comma-separated numbers...\n\nExample: 12, 15, 18, 22, 25, 28, 30, 32, 35, 38, 40, 42, 45",
+            height=120,
+            label_visibility="collapsed"
         )
         
-        st.markdown("---")
-        
-        # Custom cyber button
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            uplink_btn = st.button("🚀 INITIATE UPLINK", use_container_width=True)
-        
-        st.markdown("---")
-        st.markdown("### ⚙️ SYSTEM PARAMS")
-        
-        manual_bins = st.number_input("BIN COUNT (0 = AUTO)", min_value=0, max_value=50, value=0, step=1)
-        
-        st.markdown("---")
-        st.markdown("""
-        <div style="font-size: 10px; text-align: center; opacity: 0.6;">
-        [ STURGES' RULE ENGAGED ]<br>
-        [ QUANTUM-READY v2.0 ]
-        </div>
-        """, unsafe_allow_html=True)
+        col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
+        with col_btn2:
+            run_analysis = st.button("⚡ RUN ANALYSIS", use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
     
-    # Main content area
-    if uplink_btn:
-        data = parse_data_input(data_input)
+    if run_analysis:
+        # Parse data
+        data = parse_data(data_input)
         
         if data is None or len(data) == 0:
-            st.markdown("""
-            <div style="text-align: center; padding: 3rem; border: 1px solid #FF0000; background: rgba(255,0,0,0.1);">
-            <span style="color: #FF0000; font-family: 'Orbitron';">⚠ UPLINK FAILED: NO VALID DATA DETECTED ⚠</span>
-            </div>
-            """, unsafe_allow_html=True)
+            st.error("❌ INVALID INPUT: No valid numbers detected. Please enter comma-separated numeric values.")
             return
         
-        # Display data metrics
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.metric("TOTAL ENTRIES", f"{len(data)}", delta=None)
-        with col2:
-            st.metric("MEAN", f"{np.mean(data):.3f}")
-        with col3:
-            st.metric("STD DEV", f"{np.std(data):.3f}")
-        with col4:
-            st.metric("RANGE", f"{np.max(data) - np.min(data):.3f}")
-        
-        # Determine bins
-        num_bins = manual_bins if manual_bins > 0 else sturges_rule(len(data))
-        
-        # Create frequency distribution
-        freq_df, bin_edges, counts = create_frequency_distribution(data, num_bins)
-        
-        if freq_df is not None:
-            # Frequency Distribution Table with cyber styling
-            st.markdown("### 📋 FREQUENCY DISTRIBUTION MATRIX")
+        with st.spinner("🛰️ PROCESSING DATA STREAM..."):
+            # Calculate statistics
+            df_stats, stats, frequencies, midpoints, intervals = calculate_class_statistics(data)
             
-            # Style the dataframe
-            styled_df = freq_df.style.background_gradient(cmap='Blues', subset=['FREQUENCY', 'CUMULATIVE'])
-            styled_df = styled_df.set_properties(**{
-                'background-color': 'rgba(0,0,0,0.6)',
-                'border-color': '#00FFFF',
-                'color': '#00FFFF',
-                'font-family': 'Share Tech Mono'
-            })
+            # Extract upper bounds for ogive
+            upper_bounds = []
+            for interval in intervals:
+                # Parse interval string to get upper bound
+                import re
+                match = re.search(r'[\d.]+,\s*([\d.]+)', interval)
+                if match:
+                    upper_bounds.append(float(match.group(1)))
             
-            st.dataframe(styled_df, use_container_width=True, height=300)
+            cum_frequencies = df_stats["Cumulative Frequency"].values
             
-            # Visualization Suite
+            # SUMMARY STATISTICS
+            st.markdown('<div class="system-header">📊 SYSTEM STATUS METRICS</div>', unsafe_allow_html=True)
+            
+            col1, col2, col3, col4, col5, col6 = st.columns(6)
+            with col1:
+                st.metric("TOTAL COUNT", stats['n'])
+            with col2:
+                st.metric("MINIMUM", f"{stats['min']:.2f}")
+            with col3:
+                st.metric("MAXIMUM", f"{stats['max']:.2f}")
+            with col4:
+                st.metric("MEAN", f"{stats['mean']:.2f}")
+            with col5:
+                st.metric("MEDIAN", f"{stats['median']:.2f}")
+            with col6:
+                st.metric("STD DEV", f"{stats['std']:.2f}")
+            
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("RANGE", f"{stats['range']:.2f}")
+            with col2:
+                st.metric("NUM CLASSES", stats['num_classes'])
+            with col3:
+                st.metric("CLASS WIDTH", f"{stats['class_width']:.3f}")
+            
             st.markdown("---")
-            st.markdown("### 🎛️ QUANTUM VISUALIZATION SUITE")
             
-            # Row 1: Histogram + Polygon and Ogive
+            # ANALYSIS TABLE
+            st.markdown('<div class="system-header system-header-cyan">📋 ANALYSIS TABLE</div>', unsafe_allow_html=True)
+            
+            # Display table with custom styling
+            st.dataframe(
+                df_stats,
+                use_container_width=True,
+                height=400,
+                column_config={
+                    "Class Interval": st.column_config.TextColumn("CLASS INTERVAL", width="medium"),
+                    "Frequency": st.column_config.NumberColumn("FREQUENCY", format="%d"),
+                    "Cumulative Frequency": st.column_config.NumberColumn("CUMULATIVE FREQUENCY", format="%d"),
+                    "Midpoint": st.column_config.NumberColumn("MIDPOINT", format="%.2f")
+                }
+            )
+            
+            # Download button
+            st.markdown(download_csv(df_stats), unsafe_allow_html=True)
+            
+            st.markdown("---")
+            
+            # VISUALIZATION SUITE
+            st.markdown('<div class="system-header">🛸 VISUAL SYSTEM</div>', unsafe_allow_html=True)
+            
+            # Row 1: Dot Plot and Histogram
             col1, col2 = st.columns(2)
             
             with col1:
-                fig1 = create_histogram_polygon(data, bin_edges, counts)
-                st.plotly_chart(fig1, use_container_width=True, config={'displayModeBar': False})
+                with st.spinner("🖥️ RENDERING DOT PLOT..."):
+                    dot_plot = create_dot_plot(data)
+                    st.plotly_chart(dot_plot, use_container_width=True, config={'displayModeBar': False})
             
             with col2:
-                fig2 = create_ogive(data, bin_edges, counts)
-                st.plotly_chart(fig2, use_container_width=True, config={'displayModeBar': False})
+                with st.spinner("📊 RENDERING HISTOGRAM..."):
+                    histogram = create_histogram(data, stats['num_classes'])
+                    st.plotly_chart(histogram, use_container_width=True, config={'displayModeBar': False})
             
-            # Row 2: Dot Plot and Box Plot
+            # Row 2: Frequency Polygon and Ogive
             col3, col4 = st.columns(2)
             
             with col3:
-                fig3 = create_dot_plot(data)
-                st.plotly_chart(fig3, use_container_width=True, config={'displayModeBar': False})
+                with st.spinner("📈 RENDERING FREQUENCY POLYGON..."):
+                    if len(midpoints) > 0:
+                        polygon = create_frequency_polygon(midpoints, frequencies)
+                        st.plotly_chart(polygon, use_container_width=True, config={'displayModeBar': False})
             
             with col4:
-                fig4 = create_box_plot(data)
-                st.plotly_chart(fig4, use_container_width=True, config={'displayModeBar': False})
+                with st.spinner("📉 RENDERING OGIVE..."):
+                    if len(upper_bounds) > 0:
+                        ogive = create_ogive(upper_bounds, cum_frequencies)
+                        st.plotly_chart(ogive, use_container_width=True, config={'displayModeBar': False})
             
-            # Statistical summary in cyber style
-            st.markdown("---")
-            st.markdown("### 📊 QUANTUM STATISTICAL MATRIX")
+            # Success message
+            st.success("✅ ANALYSIS COMPLETE | All systems operational")
             
-            # Calculate quartiles
-            q1, q2, q3 = np.percentile(data, [25, 50, 75])
-            
-            stats_cols = st.columns(5)
-            with stats_cols[0]:
-                st.metric("MIN", f"{np.min(data):.3f}")
-            with stats_cols[1]:
-                st.metric("Q1 (25%)", f"{q1:.3f}")
-            with stats_cols[2]:
-                st.metric("MEDIAN", f"{q2:.3f}")
-            with stats_cols[3]:
-                st.metric("Q3 (75%)", f"{q3:.3f}")
-            with stats_cols[4]:
-                st.metric("MAX", f"{np.max(data):.3f}")
-            
-            # Skewness and Kurtosis
-            skew_val = pd.Series(data).skew()
-            kurt_val = pd.Series(data).kurtosis()
-            
-            col1, col2 = st.columns(2)
-            with col1:
-                st.metric("SKEWNESS", f"{skew_val:.3f}", 
-                         delta="SYMMETRIC" if abs(skew_val) < 0.5 else "SKEWED")
-            with col2:
-                st.metric("KURTOSIS", f"{kurt_val:.3f}",
-                         delta="MESOKURTIC" if abs(kurt_val) < 1 else "EXTREME")
-    
     else:
-        # Idle state - show cyber interface waiting for input
+        # Idle state - show placeholder
         st.markdown("""
-        <div style="text-align: center; padding: 4rem; border: 1px solid #00FFFF; border-radius: 8px; background: rgba(0, 255, 255, 0.02);">
-            <span style="font-family: 'Orbitron'; font-size: 20px; color: #00FFFF;">
-            ⚡ SYSTEM READY ⚡
-            </span><br><br>
-            <span style="font-family: 'Share Tech Mono'; font-size: 14px; color: #BD00FF;">
-            [ AWAITING DATA UPLINK ]
-            </span><br>
-            <span style="font-family: 'Share Tech Mono'; font-size: 11px; opacity: 0.6;">
-            Input numeric data in the sidebar portal and press "INITIATE UPLINK"
+        <div style="text-align: center; padding: 3rem; background: rgba(0, 255, 159, 0.05); border: 2px dashed rgba(0, 255, 159, 0.3); border-radius: 8px; margin: 2rem 0;">
+            <span style="font-family: 'Orbitron'; font-size: 1.2rem; color: #00ff9f;">
+            🎯 SYSTEM ARMED & READY
+            </span>
+            <br><br>
+            <span style="font-family: 'Share Tech Mono'; font-size: 0.9rem; color: #00eaff;">
+            Enter comma-separated numerical data above and click "RUN ANALYSIS" to initialize statistical protocols
             </span>
         </div>
         """, unsafe_allow_html=True)
+    
+    # Footer
+    st.markdown("---")
+    st.markdown("""
+    <div style="text-align: center; font-size: 0.7rem; color: rgba(0, 255, 159, 0.4); padding: 1rem;">
+    AEGIS STAT ANALYZER | Powered by Streamlit & Plotly | SECURE AIR-DEFENSE PROTOCOL v2.0
+    </div>
+    """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
